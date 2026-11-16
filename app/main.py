@@ -44,7 +44,9 @@ PLANOS = {
 }
 
 TEXTOS = """Você escreve a página de venda de um imóvel, em português do Brasil, elegante e concreto (nada de exagero nem informação inventada).
-Ficha do imóvel (use só isto): {ficha}
+Ficha do imóvel (use só isto, sem trocar nenhum número):
+{ficha}
+Regras: o titulo_heroi e os títulos das cenas NÃO levam números; números só nos destaques, copiados exatamente da ficha.
 Responda SÓ com JSON: {{"titulo_heroi":"frase curta de impacto (até 7 palavras)","subtitulo":"uma linha com o principal diferencial",
 "cenas":[{{"rotulo":"palavra curta","titulo":"até 6 palavras","texto":"até 18 palavras"}} x4, na ordem de quem entra no imóvel],
 "destaques":["6 itens curtos da ficha"],"chamada":"frase final convidando para visitar"}}"""
@@ -112,6 +114,37 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
             out["marca_casa_ai"] = not (dono and plano_de(dono))
         return out
 
+    def ficha_texto(i: dict) -> str:
+        """Ficha em português legível (com JSON cru o modelo trocava quartos por banheiros)."""
+        partes = [f"Título: {i['titulo']}", f"Tipo: {i['tipo']} para {i['negocio']}"]
+        if i["preco"]:
+            partes.append(f"Preço: R$ {i['preco']:,.0f}".replace(",", "."))
+        if i["bairro"] or i["cidade"]:
+            partes.append("Local: " + ", ".join(x for x in (i["bairro"], i["cidade"]) if x))
+        for k, n in (("quartos", "quartos"), ("suites", "suítes (já contadas entre os quartos)"), ("banheiros", "banheiros"),
+                     ("vagas", "vagas de garagem"), ("area", "m² de área")):
+            if i[k]:
+                partes.append(f"{i[k]:g} {n}")
+        if i["descricao"]:
+            partes.append("Descrição do corretor: " + i["descricao"])
+        return "\n".join("- " + x for x in partes)
+
+    def escrever(i: dict) -> dict:
+        try:
+            txt = chamar_llm([{"role": "user", "content": TEXTOS.format(ficha=ficha_texto(i))}])
+            m = re.search(r"\{.*\}", txt, re.S)
+            textos = json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)), strict=False)
+            assert len(textos.get("cenas") or []) >= 3
+            return textos
+        except Exception as e:  # noqa: BLE001  (a página sai mesmo sem a IA, com textos da ficha)
+            log.warning("textos padrão para %s: %s", i["id"], e)
+            return {"titulo_heroi": i["titulo"], "subtitulo": f"{i['bairro']}, {i['cidade']}".strip(", "),
+                    "cenas": [{"rotulo": "Chegada", "titulo": "Bem-vindo", "texto": i["descricao"][:120]},
+                              {"rotulo": "Espaço", "titulo": "Feito para viver", "texto": ""},
+                              {"rotulo": "Detalhes", "titulo": "Cada canto pensado", "texto": ""},
+                              {"rotulo": "Agora", "titulo": "Venha conhecer", "texto": ""}],
+                    "destaques": [], "chamada": "Agende a sua visita"}
+
     # ------------------------------------------------ processamento (quadros + textos)
     def processar(iid: int) -> None:
         i = db.um("SELECT * FROM imoveis WHERE id=?", (iid,))
@@ -120,18 +153,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
             db.exec("UPDATE imoveis SET etapa=? WHERE id=?", ("Tirando os quadros do vídeo", iid))
             info = video.quadros(base / "video.mp4", base / "q")
             db.exec("UPDATE imoveis SET etapa=?, quadros=? WHERE id=?", ("A IA está escrevendo os textos", info["total"], iid))
-            ficha = {k: i[k] for k in ("titulo", "tipo", "negocio", "preco", "bairro", "cidade", "quartos", "suites", "banheiros", "vagas", "area", "descricao") if i[k]}
-            try:
-                txt = chamar_llm([{"role": "user", "content": TEXTOS.format(ficha=json.dumps(ficha, ensure_ascii=False))}])
-                m = re.search(r"\{.*\}", txt, re.S)
-                textos = json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)), strict=False)
-                assert len(textos.get("cenas") or []) >= 3
-            except Exception as e:  # noqa: BLE001  (a página sai mesmo sem a IA, com textos da ficha)
-                log.warning("textos padrão para %s: %s", iid, e)
-                textos = {"titulo_heroi": i["titulo"], "subtitulo": f"{i['bairro']}, {i['cidade']}".strip(", "),
-                          "cenas": [{"rotulo": "Chegada", "titulo": "Bem-vindo", "texto": i["descricao"][:120]}, {"rotulo": "Espaço", "titulo": "Feito para viver", "texto": ""},
-                                    {"rotulo": "Detalhes", "titulo": "Cada canto pensado", "texto": ""}, {"rotulo": "Agora", "titulo": "Venha conhecer", "texto": ""}],
-                          "destaques": [], "chamada": "Agende a sua visita"}
+            textos = escrever(i)
             (base / "video.mp4").unlink(missing_ok=True)  # o vídeo original não fica guardado: só os quadros
             db.exec("UPDATE imoveis SET estado='pronto', etapa='', textos=?, pronto_em=? WHERE id=?", (json.dumps(textos, ensure_ascii=False), agora(), iid))
         except Exception as e:  # noqa: BLE001
@@ -256,6 +278,16 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
     @app.get("/api/imoveis/{iid}")
     def ver_imovel(iid: int, request: Request):
         return vista(meu_imovel(usuario(request), iid))
+
+    @app.post("/api/imoveis/{iid}/textos")
+    def refazer_textos(iid: int, request: Request):
+        """O corretor não gostou dos textos: a IA escreve de novo a partir da ficha (o vídeo não precisa subir de novo)."""
+        u = usuario(request)
+        i = meu_imovel(u, iid)
+        if i["estado"] != "pronto":
+            raise HTTPException(409, "o site ainda não está pronto")
+        db.exec("UPDATE imoveis SET textos=? WHERE id=?", (json.dumps(escrever(i), ensure_ascii=False), iid))
+        return vista(db.um("SELECT * FROM imoveis WHERE id=?", (iid,)))
 
     @app.delete("/api/imoveis/{iid}")
     def apagar_imovel(iid: int, request: Request):
