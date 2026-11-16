@@ -130,14 +130,18 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
         return "\n".join("- " + x for x in partes)
 
     def escrever(i: dict) -> dict:
-        try:
-            txt = chamar_llm([{"role": "user", "content": TEXTOS.format(ficha=ficha_texto(i))}])
-            m = re.search(r"\{.*\}", txt, re.S)
-            textos = json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)), strict=False)
-            assert len(textos.get("cenas") or []) >= 3
-            return textos
-        except Exception as e:  # noqa: BLE001  (a página sai mesmo sem a IA, com textos da ficha)
-            log.warning("textos padrão para %s: %s", i["id"], e)
+        erro = None
+        for _ in range(2):  # a IA às vezes demora ou corta o JSON: uma nova tentativa antes dos textos padrão
+            try:
+                txt = chamar_llm([{"role": "user", "content": TEXTOS.format(ficha=ficha_texto(i))}])
+                m = re.search(r"\{.*\}", txt, re.S)
+                textos = json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)), strict=False)
+                assert len(textos.get("cenas") or []) >= 3
+                return textos
+            except Exception as e:  # noqa: BLE001
+                erro = e
+        if True:  # a página sai mesmo sem a IA, com textos da ficha
+            log.warning("textos padrão para %s: %s", i["id"], erro)
             return {"titulo_heroi": i["titulo"], "subtitulo": f"{i['bairro']}, {i['cidade']}".strip(", "),
                     "cenas": [{"rotulo": "Chegada", "titulo": "Bem-vindo", "texto": i["descricao"][:120]},
                               {"rotulo": "Espaço", "titulo": "Feito para viver", "texto": ""},
@@ -233,6 +237,8 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
         titulo = str(b.get("titulo") or "").strip()[:90]
         if len(titulo) < 4:
             raise HTTPException(422, "dê um título ao imóvel")
+        if usados_mes(u) >= LIMITES.get(plano_de(u), 1):  # barra antes de o corretor subir o vídeo
+            raise HTTPException(402, "você usou os sites do seu plano neste mês")
         num = lambda k, t=float: t(b[k]) if b.get(k) not in (None, "") else None  # noqa: E731
         slug = _slug(f"{titulo} {b.get('bairro') or ''}")
         while db.um("SELECT 1 FROM imoveis WHERE slug=?", (slug,)):

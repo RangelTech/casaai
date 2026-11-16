@@ -59,8 +59,8 @@ def test_limite_gratis_e_plano(amb, video):
     c = amb
     a = c.post("/api/imoveis", json={"titulo": "Apartamento 1"}).json()
     c.post(f"/api/imoveis/{a['id']}/video", content=video)
-    b = c.post("/api/imoveis", json={"titulo": "Apartamento 2"}).json()
-    assert c.post(f"/api/imoveis/{b['id']}/video", content=video).status_code == 402  # grátis: 1 site
+    assert c.post("/api/imoveis", json={"titulo": "Apartamento 2"}).status_code == 402  # grátis: 1 site, barrado antes do vídeo
     c.post("/api/cakto", json={"secret": "ck", "event": "purchase_approved", "data": {"id": "1", "customer": {"email": "cor@x.com"}, "product": {"id": "p-corretor"}}})
+    b = c.post("/api/imoveis", json={"titulo": "Apartamento 2"}).json()
     assert c.post(f"/api/imoveis/{b['id']}/video", content=video).json()["estado"] == "pronto"
     assert TestClient(c.app).get(f"/api/publico/{b['slug']}").json()["marca_casa_ai"] is False
