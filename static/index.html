@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa AI: do vídeo do imóvel a um site de cinema</title>
+<meta name="description" content="Suba o vídeo do imóvel gravado no celular e receba um site cinematográfico: o passeio anda conforme o cliente rola, textos de venda pela IA e botão de WhatsApp.">
+<meta property="og:title" content="Casa AI: o imóvel que se mostra sozinho">
+<meta property="og:description" content="Vídeo do celular vira site de cinema em minutos. Para corretores e imobiliárias.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23140f07'/><path d='M14 32l18-16 18 16v18H14z' fill='none' stroke='%23ffb547' stroke-width='5' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="/s/estilo.css">
+<link rel="stylesheet" href="/s/cinema.css">
+<style>
+:root{--marca:#ffb547;--bg:#070605;--bg2:#0e0c09;--card:#15120d;--bd:#2a2318}
+.demo{position:relative;height:420vh}
+.demo .fixo{position:sticky;top:0;height:100vh;overflow:hidden}
+.demo canvas{position:absolute;inset:0;width:100%;height:100%}
+.demo .veu{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,6,5,.55),transparent 30%,transparent 65%,rgba(7,6,5,.85))}
+.demo .txt{position:absolute;left:6vw;right:6vw;bottom:12vh;opacity:0}
+.demo .txt small{display:block;color:var(--ac);font-weight:800;letter-spacing:.3em;text-transform:uppercase;font-size:13px;margin-bottom:12px}
+.demo .txt h2{font-size:clamp(38px,6.5vw,92px);font-weight:900;line-height:1;letter-spacing:-.03em;max-width:14ch;text-shadow:0 2px 24px rgba(0,0,0,.7)}
+.antes{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.antes div{border:1px solid var(--bd);border-radius:20px;padding:24px;background:var(--card)}
+.antes .ruim{opacity:.75}.antes h3{margin-bottom:8px}
+@media (max-width:860px){.antes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <a class="logo" href="/"><i>⌂</i>Casa AI</a>
+  <nav><a class="lnk" href="#demo">Veja funcionando</a><a class="lnk" href="#como">Como funciona</a><a class="lnk" href="#planos">Planos</a><button class="btn btn-sec" data-entrar>Entrar</button></nav>
+</div></header>
+<main>
+<section class="heroi">
+  <div class="aurora" aria-hidden="true"></div><div class="grade-fina" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="selo"><b></b>Para corretores e imobiliárias</span>
+    <h1>O vídeo do celular vira um <em>site de cinema</em>.</h1>
+    <p class="lead">Grave o imóvel andando, suba o vídeo e receba em minutos uma página onde o passeio anda conforme o cliente rola, com textos de venda escritos pela IA e botão de WhatsApp. Link pronto para mandar e anunciar.</p>
+    <div class="ctas"><a class="btn btn-pri btn-lg pulsa" href="#planos">Criar meu primeiro site grátis</a><a class="btn btn-sec btn-lg" href="#demo">Ver funcionando</a></div>
+    <div class="numeros"><div><b>5 min</b><span>do vídeo ao link</span></div><div><b>0</b><span>programação ou designer</span></div><div><b>1 clique</b><span>para o cliente chamar no WhatsApp</span></div></div>
+  </div>
+</section>
+
+<section class="demo" id="demo" aria-label="Demonstração: o passeio anda conforme você rola">
+  <div class="fixo"><canvas id="demo-tela"></canvas><div class="veu"></div>
+    <div class="txt" data-de="0.02" data-ate="0.3"><small>Role a página</small><h2>O cliente entra no imóvel.</h2></div>
+    <div class="txt" data-de="0.36" data-ate="0.64"><small>Sem sair do celular</small><h2>Cada passo, no ritmo dele.</h2></div>
+    <div class="txt" data-de="0.7" data-ate="1.01"><small>E no final</small><h2>Ele chama você no WhatsApp.</h2></div>
+  </div>
+</section>
+
+<section class="bloco" id="como"><div class="wrap">
+  <div class="olho">Como funciona</div>
+  <h2 class="rev">Três passos. Você só grava.</h2>
+  <div class="passos" style="margin-top:40px">
+    <div class="passo rev"><h3>Grave andando</h3><p>Do portão até a área de lazer, devagar, celular na horizontal. Um minuto basta.</p></div>
+    <div class="passo rev"><h3>Preencha a ficha</h3><p>Preço, quartos, metragem e os diferenciais. A IA escreve os textos de venda a partir dela, sem inventar nada.</p></div>
+    <div class="passo rev"><h3>Mande o link</h3><p>No anúncio, no status, no grupo. Você vê quantas pessoas abriram e quantas chamaram no WhatsApp.</p></div>
+  </div>
+</div></section>
+
+<section class="bloco" style="background:var(--bg2)"><div class="wrap">
+  <div class="olho">Por que funciona</div>
+  <h2 class="rev">Foto parada não vende como antes.</h2>
+  <div class="antes" style="margin-top:32px">
+    <div class="ruim rev"><h3>Anúncio comum</h3><p class="dim">30 fotos parecidas, o cliente passa rápido, pergunta "ainda está disponível?" e some.</p></div>
+    <div class="rev"><h3>Site Casa AI</h3><p class="dim">O cliente "entra" na casa rolando a tela, vê os ambientes em sequência e chega no botão de visita já interessado.</p></div>
+  </div>
+</div></section>
+
+<section class="bloco" id="planos"><div class="wrap">
+  <div class="olho">Planos</div>
+  <h2 class="rev">O primeiro site é grátis.</h2>
+  <p class="sub rev">Teste com um imóvel seu. Preço de lançamento nos planos.</p>
+  <div class="planos" data-planos="/api/planos" data-destaque="0"></div>
+</div></section>
+
+<section class="bloco" style="background:var(--bg2)"><div class="wrap" style="max-width:860px">
+  <div class="olho">Dúvidas</div>
+  <h2 style="margin-bottom:24px">Perguntas frequentes</h2>
+  <details><summary>Precisa de drone ou câmera profissional?</summary><p>Não. Vídeo de celular na horizontal, andando devagar, já fica muito bom.</p></details>
+  <details><summary>A IA pode inventar coisa do imóvel?</summary><p>Ela escreve só a partir da ficha que você preencheu. Confira o site antes de divulgar.</p></details>
+  <details><summary>E o tour 3D?</summary><p>Está em desenvolvimento: o mesmo vídeo vai virar um passeio 3D em que o cliente anda pelo imóvel. Assinantes Imobiliária recebem primeiro.</p></details>
+  <details><summary>Como cancelo?</summary><p>Pela própria Cakto, a qualquer momento. Nos primeiros 7 dias o dinheiro volta inteiro.</p></details>
+</div></section>
+
+<section class="fechamento"><div class="wrap">
+  <h2 class="rev">Seu próximo imóvel merece mais que fotos.</h2>
+  <p class="rev">Grave hoje, mande o link hoje.</p>
+  <a class="btn btn-pri btn-lg pulsa" href="#planos">Criar meu site grátis</a>
+</div></section>
+</main>
+<footer class="rodape"><div class="wrap"><span>Casa AI, um produto Rangel Tech</span><span>contato@rangeltech.net</span></div></footer>
+<div class="fixo-cel"><a class="btn btn-pri" href="#planos">Criar meu site grátis</a></div>
+<div class="modal" id="m-entrar" hidden role="dialog" aria-modal="true" aria-labelledby="m-tit"><div class="caixa"><button class="x" data-fechar aria-label="Fechar">×</button></div></div>
+<script>
+;(async () => {
+  const palco = document.getElementById('demo'), tela = document.getElementById('demo-tela'), ctx = tela.getContext('2d')
+  const txts = [...palco.querySelectorAll('.txt')]
+  let info = { total: 0 }, imgs = [], atual = -1, alvo = 0
+  const ajustar = () => { const k = Math.min(devicePixelRatio || 1, 2); tela.width = innerWidth * k; tela.height = innerHeight * k; atual = -1 }
+  function desenhar() { const i = Math.round(alvo); if (i === atual) return; let k = i; while (k > 0 && !(imgs[k] && imgs[k].complete && imgs[k].naturalWidth)) k--
+    const im = imgs[k]; if (!im || !im.naturalWidth) return; atual = i; const s = Math.max(tela.width / im.naturalWidth, tela.height / im.naturalHeight)
+    ctx.drawImage(im, (tela.width - im.naturalWidth * s) / 2, (tela.height - im.naturalHeight * s) / 2, im.naturalWidth * s, im.naturalHeight * s) }
+  function aoRolar() { const r = palco.getBoundingClientRect(), p = Math.min(1, Math.max(0, -r.top / (palco.offsetHeight - innerHeight))); alvo = p * Math.max(0, info.total - 1)
+    for (const t of txts) t.style.opacity = Math.min(1, Math.max(0, Math.min((p - t.dataset.de) / 0.05, (t.dataset.ate - p) / 0.05))) }
+  try { info = await (await fetch('/s/demo/quadros.json')).json() } catch { return }
+  const carregar = (i) => new Promise((ok) => { const x = new Image(); x.onload = x.onerror = ok; x.src = `/s/demo/${String(i + 1).padStart(4, '0')}.webp`; imgs[i] = x })
+  await carregar(0); ajustar(); aoRolar(); addEventListener('resize', ajustar); addEventListener('scroll', aoRolar, { passive: true }); (function l() { desenhar(); requestAnimationFrame(l) })()
+  const ordem = []; for (const p of [8, 4, 2, 1]) for (let i = 0; i < info.total; i += p) if (!ordem.includes(i)) ordem.push(i)
+  for (let i = 0; i < ordem.length; i += 6) await Promise.all(ordem.slice(i, i + 6).map(carregar))
+})()
+</script>
+<script src="/s/login.js" data-conta="/api/conta" data-destino="/painel"></script>
+<script src="/s/cinema.js"></script>
+<script src="/s/olho.js"></script>
+</body>
+</html>

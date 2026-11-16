@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meus imóveis · Casa AI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23140f07'/><path d='M14 32l18-16 18 16v18H14z' fill='none' stroke='%23ffb547' stroke-width='5' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="/s/estilo.css">
+<link rel="stylesheet" href="/s/cinema.css">
+<style>
+:root{--marca:#ffb547;--bg:#070605;--bg2:#0e0c09;--card:#15120d;--bd:#2a2318}
+.topo{background:rgba(7,6,5,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
+main.p{width:min(1100px,100%);margin:0 auto;padding:96px 24px 80px}
+.cartao{background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:22px;margin-bottom:14px}
+.cab{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.form label{display:grid;gap:6px;font-size:14px;color:var(--mut)}
+.form input,.form select,.form textarea{background:#0b0906;border:1px solid var(--bd);border-radius:12px;padding:11px 12px;color:var(--fg);font:inherit;width:100%}
+.form .l2{grid-column:span 2}.form .cheia{grid-column:1/-1}
+.soltar{display:grid;place-items:center;text-align:center;border:2px dashed var(--bd);border-radius:18px;padding:28px;cursor:pointer;color:var(--mut)}
+.soltar strong{color:var(--fg);display:block;margin-bottom:4px}
+.barra{height:8px;background:#221c12;border-radius:99px;overflow:hidden;margin-top:10px}.barra i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+.imoveis{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.imv{background:var(--card);border:1px solid var(--bd);border-radius:20px;overflow:hidden}
+.imv .capa{aspect-ratio:16/9;background:#0b0906 center/cover no-repeat;display:grid;place-items:center;color:var(--mut)}
+.imv .info{padding:16px}.imv h3{font-size:18px}.imv small{color:var(--mut)}
+.imv .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--bd);color:var(--mut)}.tag.ok{border-color:#34d399;color:#34d399}.tag.erro{border-color:#f87171;color:#f87171}
+.msg.erro{color:#f87171}.msg{min-height:20px;font-size:14px;margin-top:8px}
+@media (max-width:760px){.form{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header class="topo"><div class="wrap"><a class="logo" href="/painel"><i>⌂</i>Casa AI</a>
+  <div style="display:flex;gap:8px;align-items:center"><span class="dim" id="cota"></span><button class="btn btn-ghost" data-senha>Senha</button><button class="btn btn-ghost" id="sair">Sair</button></div></div></header>
+<main class="p">
+  <div class="cartao" id="aviso" hidden></div>
+  <div class="cartao"><div class="cab"><h2 style="font-size:22px">Novo imóvel</h2><span class="dim">Grave a casa andando devagar, do portão até a área de lazer. Celular na horizontal.</span></div>
+    <form class="form" id="f-imv">
+      <label class="l2">Título<input id="i-tit" required placeholder="Ex.: Casa térrea com piscina"></label><label>Negócio<select id="i-neg"><option value="venda">Venda</option><option value="aluguel">Aluguel</option></select></label><label>Preço (R$)<input id="i-preco" type="number"></label>
+      <label>Bairro<input id="i-bairro"></label><label>Cidade<input id="i-cidade"></label><label>Tipo<select id="i-tipo"><option>casa</option><option>apartamento</option><option>sobrado</option><option>terreno</option><option>sala comercial</option></select></label><label>Área (m²)<input id="i-area" type="number"></label>
+      <label>Quartos<input id="i-q" type="number"></label><label>Suítes<input id="i-s" type="number"></label><label>Banheiros<input id="i-b" type="number"></label><label>Vagas<input id="i-v" type="number"></label>
+      <label class="l2">Seu WhatsApp<input id="i-wa" placeholder="(62) 99999-0000"></label><label>Seu nome ou imobiliária<input id="i-cor"></label><label>Cor do site<input id="i-cor-hex" type="color" value="#ffb547" style="height:46px;padding:4px"></label>
+      <label class="cheia">Descrição (diferenciais, acabamento, condomínio)<textarea id="i-desc" rows="3"></textarea></label>
+      <label class="soltar cheia" for="i-video"><input id="i-video" type="file" accept="video/*" hidden required><strong id="i-video-nome">Escolha o vídeo do imóvel</strong><span>MP4 ou MOV, até 900 MB. O site fica pronto em poucos minutos.</span></label>
+      <div class="cheia"><button class="btn btn-pri btn-lg" style="width:100%">Criar o site cinematográfico</button><div class="barra" id="barra" hidden><i></i></div><div class="msg" id="i-msg"></div></div>
+    </form></div>
+  <h2 style="font-size:22px;margin:24px 0 12px">Meus sites</h2>
+  <div class="imoveis" id="lista"></div>
+  <div class="planos" id="planos" style="margin-top:28px"></div>
+</main>
+<div class="modal" id="m-entrar" hidden role="dialog" aria-modal="true" aria-labelledby="m-tit"><div class="caixa"><button class="x" data-fechar aria-label="Fechar">×</button></div></div>
+<script>
+;(() => {
+  const $ = (q, r = document) => r.querySelector(q), $$ = (q, r = document) => [...r.querySelectorAll(q)]
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  async function api(url, op = {}) { const r = await fetch(url, { ...op, headers: { 'Content-Type': 'application/json', ...(op.headers || {}) } }); let j = {}; try { j = await r.json() } catch {}
+    if (r.status === 401) { location.href = '/?entrar=1'; throw new Error('entre de novo') } if (!r.ok) { const e = new Error(typeof j.detail === 'string' ? j.detail : 'Não deu certo.'); e.status = r.status; throw e } return j }
+  $('#sair').onclick = async () => { await api('/api/sair', { method: 'POST' }); location.href = '/' }
+  $('#i-video').onchange = () => { const f = $('#i-video').files[0]; $('#i-video-nome').textContent = f ? `${f.name} (${(f.size / 1048576).toFixed(0)} MB)` : 'Escolha o vídeo do imóvel' }
+  let poll = null
+  async function conta() { const c = await api('/api/conta'); $('#cota').textContent = `${c.usados} de ${c.limite} sites neste mês`
+    $('#aviso').hidden = !!c.plano; $('#aviso').innerHTML = '<b>Plano grátis:</b> 1 site de teste, com a marca Casa AI. Assine para criar mais sites e tirar a marca.'
+    $('#planos').innerHTML = c.planos.map((p, i) => `<div class="plano ${i === 0 ? 'destaque' : ''}"><h3>${esc(p.nome)}</h3><div class="preco">R$ ${p.preco.toFixed(2).replace('.', ',')}<small>/mês</small></div><ul>${p.itens.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>${p.checkout ? `<a class="btn btn-pri" href="${esc(p.checkout)}">Assinar o ${esc(p.nome)}</a>` : ''}</div>`).join('') }
+  async function listar() { const { imoveis } = await api('/api/imoveis')
+    $('#lista').innerHTML = imoveis.length ? imoveis.map((i) => `<div class="imv"><div class="capa" style="${i.estado === 'pronto' ? `background-image:url('/c/${i.slug}/capa.webp')` : ''}">${i.estado === 'pronto' ? '' : esc(i.etapa || i.estado)}</div>
+      <div class="info"><div class="cab" style="margin:0"><h3>${esc(i.titulo)}</h3><span class="tag ${i.estado === 'pronto' ? 'ok' : i.estado === 'erro' ? 'erro' : ''}">${{ pronto: 'no ar', processando: 'gerando', erro: 'não deu certo', rascunho: 'sem vídeo' }[i.estado]}</span></div>
+      <small>${esc([i.bairro, i.cidade].filter(Boolean).join(' · '))}${i.estado === 'pronto' ? ` · ${i.visitas} visitas · ${i.cliques} cliques no WhatsApp` : ''}</small>${i.erro ? `<p class="msg erro">${esc(i.erro)}</p>` : ''}
+      <div class="acoes">${i.estado === 'pronto' ? `<a class="btn btn-pri" href="${esc(i.url)}" target="_blank" rel="noopener">Abrir o site</a><button class="btn btn-sec" data-copiar="${esc(i.url)}">Copiar link</button>` : ''}<button class="btn btn-ghost" data-apagar="${i.id}">Apagar</button></div></div></div>`).join('')
+      : '<p class="dim">Nenhum site ainda. Cadastre o imóvel e envie o vídeo.</p>'
+    $$('[data-copiar]').forEach((b) => (b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copiar); b.textContent = 'Copiado!' } catch {} }))
+    $$('[data-apagar]').forEach((b) => (b.onclick = async () => { if (confirm('Apagar o site deste imóvel?')) { await api('/api/imoveis/' + b.dataset.apagar, { method: 'DELETE' }); listar(); conta() } }))
+    clearTimeout(poll); if (imoveis.some((i) => i.estado === 'processando')) poll = setTimeout(listar, 4000) }
+  $('#f-imv').onsubmit = async (e) => { e.preventDefault(); const f = $('#i-video').files[0]; if (!f) return; const m = $('#i-msg'); m.className = 'msg'
+    try { const i = await api('/api/imoveis', { method: 'POST', body: JSON.stringify({ titulo: $('#i-tit').value, negocio: $('#i-neg').value, preco: $('#i-preco').value, bairro: $('#i-bairro').value, cidade: $('#i-cidade').value, tipo: $('#i-tipo').value,
+        area: $('#i-area').value, quartos: $('#i-q').value, suites: $('#i-s').value, banheiros: $('#i-b').value, vagas: $('#i-v').value, whatsapp: $('#i-wa').value, corretor: $('#i-cor').value, cor: $('#i-cor-hex').value, descricao: $('#i-desc').value }) })
+      const barra = $('#barra'); barra.hidden = false
+      await new Promise((ok, falha) => { const x = new XMLHttpRequest(); x.open('POST', `/api/imoveis/${i.id}/video`)
+        x.upload.onprogress = (ev) => { if (ev.lengthComputable) { barra.firstElementChild.style.width = (100 * ev.loaded / ev.total).toFixed(0) + '%'; m.textContent = `Enviando o vídeo: ${(100 * ev.loaded / ev.total).toFixed(0)}%` } }
+        x.onload = () => { barra.hidden = true; if (x.status < 300) ok(); else { let d = 'não consegui enviar'; try { d = JSON.parse(x.responseText).detail } catch {} falha(new Error(d)) } }
+        x.onerror = () => falha(new Error('a conexão caiu no envio; tente de novo')); x.send(f) })
+      m.textContent = 'Recebido! O site fica pronto em poucos minutos; acompanhe abaixo.'; e.target.reset(); $('#i-video-nome').textContent = 'Escolha o vídeo do imóvel'; listar(); conta()
+    } catch (err) { m.textContent = err.message; m.className = 'msg erro' } }
+  conta(); listar()
+})()
+</script>
+<script src="/s/login.js"></script>
+<script src="/s/olho.js"></script>
+</body>
+</html>
