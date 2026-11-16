@@ -26,6 +26,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from app import auth, mailer, senha_rotas, video
 from app.config import Config, carregar
 from app.db import Banco, agora
+from app import admin  # prompts editáveis no /admin
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("casaai")
@@ -61,6 +62,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
     cfg = cfg or carregar()
     os.makedirs(cfg.dados, exist_ok=True)
     db = Banco(os.path.join(cfg.dados, "casaai.db"))
+    admin.preparar(db)
     PASTA = Path(cfg.dados) / "imoveis"
     PASTA.mkdir(exist_ok=True)
     app = FastAPI(title="Casa AI", docs_url=None, redoc_url=None, openapi_url=None)
@@ -133,7 +135,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
         erro = None
         for _ in range(2):  # a IA às vezes demora ou corta o JSON: uma nova tentativa antes dos textos padrão
             try:
-                txt = chamar_llm([{"role": "user", "content": TEXTOS.format(ficha=ficha_texto(i))}])
+                txt = chamar_llm([{"role": "user", "content": admin.formatar("casa-textos", TEXTOS, ficha=ficha_texto(i))}])
                 m = re.search(r"\{.*\}", txt, re.S)
                 textos = json.loads(re.sub(r",\s*([}\]])", r"\1", m.group(0)), strict=False)
                 assert len(textos.get("cenas") or []) >= 3
@@ -378,6 +380,13 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
         return {"ok": True, "ignorado": evento}
 
     from fastapi.staticfiles import StaticFiles
+    app.include_router(admin.rotas(db, cfg.segredo_sessao, """SELECT email, criado, plano, ativo_ate, (ativo_ate > strftime('%s','now')) ativo
+        FROM usuarios ORDER BY criado DESC""", seguro=not cfg.dev))
+
+    @app.get("/admin", response_class=HTMLResponse)
+    def pagina_admin():
+        return FileResponse(ESTATICO / "admin.html")
+
     app.mount("/s", StaticFiles(directory=ESTATICO), name="estatico")
 
     @app.get("/", response_class=HTMLResponse)

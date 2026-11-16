@@ -5,6 +5,7 @@ COPY requirements.txt .
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/* && pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY static ./static
+COPY skills ./skills
 ARG GIT_COMMIT=dev
 ENV GIT_COMMIT=${GIT_COMMIT} PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 CASAAI_DADOS=/data HOME=/tmp
 USER 10001
