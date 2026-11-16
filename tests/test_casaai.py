@@ -23,7 +23,7 @@ def llm_falso(msgs):
 @pytest.fixture(scope="module")
 def video(tmp_path_factory):
     p = tmp_path_factory.mktemp("v") / "casa.mp4"
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=640x360:rate=24", "-t", "5", "-pix_fmt", "yuv420p", str(p)], check=True)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=640x360:rate=24", "-t", "5", "-c:v", "mpeg4", "-q:v", "5", str(p)], check=True)
     return p.read_bytes()
 
 
