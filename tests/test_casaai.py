@@ -1,3 +1,4 @@
+from produtos_core.teste import entrar
 import json
 import os
 import subprocess
@@ -31,8 +32,7 @@ def video(tmp_path_factory):
 def amb(tmp_path):
     cfg = Config(dados=str(tmp_path), segredo_sessao="s", dev=True, cakto_segredo="ck", planos_por_produto={"p-corretor": "corretor"}, base_url="http://t")
     c = TestClient(criar_app(cfg, llm=llm_falso, sincrono=True))
-    cod = c.post("/api/entrar/codigo", json={"email": "cor@x.com"}).json()["codigo_dev"]
-    assert c.post("/api/entrar", json={"email": "cor@x.com", "codigo": cod}).status_code == 200
+    entrar(c, "cor@x.com")
     return c
 
 

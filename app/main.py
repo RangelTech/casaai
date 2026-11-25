@@ -24,6 +24,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 
 from app import auth, mailer, senha_rotas, video
+from produtos_core import acesso
 from app.config import Config, carregar
 from app.db import Banco, agora
 from app import admin  # prompts editáveis no /admin
@@ -181,32 +182,10 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
         resp.set_cookie(COOKIE, token, max_age=auth.SESSAO_S, httponly=True, secure=not cfg.dev, samesite="lax", path="/")
         return resp
 
-    @app.post("/api/entrar/codigo")
-    async def pedir_codigo(request: Request):
-        b = await request.json()
-        email = auth.normalizar_email(b.get("email"))
-        if not email:
-            raise HTTPException(422, "e-mail inválido")
-        cod, motivo = auth.novo_codigo(db, cfg.segredo_sessao, email)
-        if motivo == "espere":
-            raise HTTPException(429, "acabamos de mandar um código; espere alguns segundos")
-        out = {"ok": True, "enviado": mailer.codigo(cfg, email, cod)}
-        if cfg.dev:
-            out["codigo_dev"] = cod
-        return out
-
-    @app.post("/api/entrar")
-    async def entrar(request: Request):
-        b = await request.json()
-        email = auth.normalizar_email(b.get("email"))
-        if not email:
-            raise HTTPException(422, "e-mail inválido")
-        r = auth.conferir_codigo(db, cfg.segredo_sessao, email, str(b.get("codigo") or ""))
-        if r != "ok":
-            raise HTTPException(400, {"invalido": "código errado", "expirado": "código vencido; peça outro", "tentativas": "muitas tentativas; peça outro código"}[r])
-        return _login(auth.usuario_por_email(db, email))
-
-    senha_rotas.registrar(app, db, cfg, mailer, _login, usuario)
+    acesso.registrar(app, db, enviar=lambda para, assunto, texto, html: mailer.enviar(cfg, para, assunto, texto, html),
+                     login=_login, usuario=usuario, criar_usuario=lambda email: auth.usuario_por_email(db, email),
+                     produto="Casa AI", base_url=cfg.base_url, destino="/painel", cor="#7c5cff",
+                     demo_email=lambda: cfg.demo_email, demo_senha=lambda: cfg.demo_senha, dev=cfg.dev)  # cadastro e login comuns (spec 57 §5A)
 
     @app.post("/api/sair")
     def sair(request: Request):
