@@ -70,6 +70,15 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
     app = FastAPI(title="Casa AI", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg, app.state.db = cfg, db
 
+    def apagar_arquivos_usuario(u: dict) -> int:
+        """Apagar usuário no /admin (spec 57 §5.1): pasta de cada imóvel (fotos, quadros, vídeo), no disco e no MinIO."""
+        n = 0
+        for i in db.todos("SELECT id FROM imoveis WHERE usuario=?", (u["id"],)):
+            esp.apagar_pasta(PASTA / str(i["id"])); n += 1
+        return n
+
+    app.state.apagar_arquivos_usuario = apagar_arquivos_usuario
+
     def chamar_llm(mensagens: list[dict]) -> str:
         if llm:
             return llm(mensagens)

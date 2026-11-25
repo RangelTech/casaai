@@ -64,3 +64,15 @@ def test_limite_gratis_e_plano(amb, video):
     b = c.post("/api/imoveis", json={"titulo": "Apartamento 2"}).json()
     assert c.post(f"/api/imoveis/{b['id']}/video", content=video).json()["estado"] == "pronto"
     assert TestClient(c.app).get(f"/api/publico/{b['slug']}").json()["marca_casa_ai"] is False
+
+
+def test_apagar_usuario_leva_os_arquivos(amb):
+    """Spec 57 §5.1: a pasta de cada imóvel (fotos, quadros, vídeo) some junto com o usuário (disco e MinIO)."""
+    import time as _t
+    from pathlib import Path
+    app = amb.app; db, cfg = app.state.db, app.state.cfg
+    u = db.um("SELECT * FROM usuarios WHERE email=?", ("cor@x.com",))
+    db.exec("INSERT INTO imoveis(usuario,slug,titulo,criado) VALUES(?,?,?,?)", (u["id"], "casa-teste-apagar", "Casa", _t.time()))
+    iid = db.um("SELECT id FROM imoveis WHERE slug=?", ("casa-teste-apagar",))["id"]
+    pasta = Path(cfg.dados) / "imoveis" / str(iid); pasta.mkdir(parents=True, exist_ok=True); (pasta / "capa.jpg").write_bytes(b"x")
+    assert app.state.apagar_arquivos_usuario(u) == 1 and not pasta.exists()
