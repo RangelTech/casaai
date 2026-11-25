@@ -1,0 +1,29 @@
+{
+  "_doc": "Contrato de planos do produto (spec 57 §3, item 4). Quem muda preço muda AQUI, no código e na oferta da Cakto; o teste tests/test_planos_contrato.py falha se o código e este arquivo divergirem. Mapa produto da Cakto -> plano e links de checkout ficam no Infisical (nunca no git).",
+  "produto": "casaai",
+  "moeda": "BRL",
+  "periodo": "mensal",
+  "planos": [
+    {
+      "codigo": "corretor",
+      "nome": "Corretor",
+      "preco": 59.9
+    },
+    {
+      "codigo": "imobiliaria",
+      "nome": "Imobiliária",
+      "preco": 149.9
+    }
+  ],
+  "cakto": {
+    "conta": "lucas",
+    "infisical": "rt-produtos/casaai",
+    "mapa": "CASAAI_PLANOS_CAKTO",
+    "checkouts": "CASAAI_CHECKOUTS",
+    "webhook": "POST /api/cakto (segredo em CASAAI_CAKTO_SEGREDO)",
+    "codigos_vendidos": [
+      "corretor",
+      "imobiliaria"
+    ]
+  }
+}
