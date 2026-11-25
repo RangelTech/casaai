@@ -24,7 +24,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 
 from app import auth, mailer, senha_rotas, video
-from produtos_core import acesso
+from produtos_core import acesso, armazenamento
 from app.config import Config, carregar
 from app.db import Banco, agora
 from app import admin  # prompts editáveis no /admin
@@ -65,6 +65,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
     db = Banco(os.path.join(cfg.dados, "casaai.db"))
     admin.preparar(db)
     PASTA = Path(cfg.dados) / "imoveis"
+    esp = armazenamento.Espelho(armazenamento.Armazenamento(pasta_local=os.path.join(cfg.dados, "arquivos")), cfg.dados)  # MinIO (spec 57 §8.6)
     PASTA.mkdir(exist_ok=True)
     app = FastAPI(title="Casa AI", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg, app.state.db = cfg, db
@@ -162,6 +163,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
             db.exec("UPDATE imoveis SET etapa=?, quadros=? WHERE id=?", ("A IA está escrevendo os textos", info["total"], iid))
             textos = escrever(i)
             (base / "video.mp4").unlink(missing_ok=True)  # o vídeo original não fica guardado: só os quadros
+            esp.guardar_pasta(base)  # quadros e capa no MinIO antes de ficar pronto
             db.exec("UPDATE imoveis SET estado='pronto', etapa='', textos=?, pronto_em=? WHERE id=?", (json.dumps(textos, ensure_ascii=False), agora(), iid))
         except Exception as e:  # noqa: BLE001
             log.exception("imóvel %s", iid)
@@ -186,6 +188,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
                      login=_login, usuario=usuario, criar_usuario=lambda email: auth.usuario_por_email(db, email),
                      produto="Casa AI", base_url=cfg.base_url, destino="/painel", cor="#7c5cff",
                      demo_email=lambda: cfg.demo_email, demo_senha=lambda: cfg.demo_senha, dev=cfg.dev)  # cadastro e login comuns (spec 57 §5A)
+    armazenamento.registrar(app, esp.arm)  # MinIO (spec 57 §8.6)
 
     @app.post("/api/sair")
     def sair(request: Request):
@@ -280,7 +283,7 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
     def apagar_imovel(iid: int, request: Request):
         u = usuario(request)
         meu_imovel(u, iid)
-        shutil.rmtree(PASTA / str(iid), ignore_errors=True)
+        esp.apagar_pasta(PASTA / str(iid))  # disco e MinIO
         db.exec("DELETE FROM imoveis WHERE id=?", (iid,))
         return {"ok": True}
 
@@ -309,13 +312,15 @@ def criar_app(cfg: Config | None = None, llm=None, sincrono: bool = False) -> Fa
             raise HTTPException(404, "não encontrado")
         p = PASTA / str(i["id"]) / "q" / arq
         if not p.exists():
+            esp.garantir_pasta(p.parent)  # contêiner novo: baixa os quadros do MinIO de uma vez
+        if not p.exists():
             raise HTTPException(404, "não encontrado")
         return FileResponse(p, headers={"Cache-Control": "public, max-age=604800, immutable"})
 
     @app.get("/c/{slug}/capa.webp")
     def capa(slug: str):
         i = db.um("SELECT id FROM imoveis WHERE slug=?", (slug,))
-        p = PASTA / str(i["id"]) / "capa.webp" if i else None
+        p = esp.garantir(PASTA / str(i["id"]) / "capa.webp") if i else None
         if not p or not p.exists():
             raise HTTPException(404, "não encontrado")
         return FileResponse(p)
